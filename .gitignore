@@ -1,0 +1,25 @@
+# Ignore .env files
+*.env
+# Ignore .htaccess files
+*.htaccess
+
+# Ignore .log files
+*.log
+
+# Ignore error_log specifically
+*error_log
+
+config/.env
+config/config.php
+
+callbackurl/flutter.json
+callbackurl/flutter2.json
+callbackurl/flutter2.php
+callbackurl/stkboogie_earn.json
+
+
+modules/tiktok
+
+modules/whatsapp/clientuploads
+modules/whatsapp/adminuploads
+modules/whatsapp/systemproduct
