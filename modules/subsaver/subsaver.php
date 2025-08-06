@@ -1,6 +1,6 @@
 <?php
 
-require_once "admin/whatsapp/whatsapp.php";
+require_once "admin/subsaver/subsaver.php";
 
 function register()
 {
@@ -387,7 +387,7 @@ function buyPackage()
 
         //     $packageAwardPrice = 0;
         // } else {
-            $packageAwardPrice = $packagePrice * 3;
+        $packageAwardPrice = $packagePrice * 3;
         // }
 
 
@@ -426,7 +426,7 @@ function buyPackage()
 
                 //     notify(2, "Hi $uname, congratulations!  your Account Has been Upgraded. Kind regards!", 200, 1);
                 // } else {
-                    notify(2, "Hi $uname, congratulations! You have received an additional $packageAwardPrice for purchasing $packageName. This amount has been added to your cashback balance and can be redeemed as soon as you claim it. Kind regards!", 200, 1);
+                notify(2, "Hi $uname, congratulations! You have received an additional $packageAwardPrice for purchasing $packageName. This amount has been added to your cashback balance and can be redeemed as soon as you claim it. Kind regards!", 200, 1);
                 // }
 
                 data();
@@ -1970,3 +1970,689 @@ function cashbackads()
         return sendJsonResponse(200, true, null, $response);
     }
 }
+
+
+// ! my new work
+
+
+
+function generateSubSaverEmail($originalEmail)
+{
+    // Split the email at the @ symbol
+    $parts = explode('@', $originalEmail);
+
+    // If the email is valid (has at least a username and domain)
+    if (count($parts) >= 2) {
+        $username = $parts[0];
+        return $username . '@subsaver.co.ke';
+    }
+
+    // Fallback if invalid email
+    return false;
+}
+
+
+function purchase()
+{
+
+    $inputs = jDecode(['amount', 'category', 'desc', 'email', 'phone', 'product']);
+
+
+    $apitoken = getstkpushtoken();
+    global $today;
+
+    $amount = $inputs['amount'];
+    $category = $inputs['category'];
+    $desc = $inputs['desc'];
+    $phone = $inputs['phone'];
+    $product = $inputs['product'];
+    $email = $inputs['email'];
+
+    $inputs['email_activefrom'] = date("Y-m-d H:i:s", strtotime("+7 hours"));
+    $inputs['expiry'] = date("Y-m-d H:i:s", strtotime("+2 months +6 days"));
+
+
+    $inputs['status'] = "Active";
+    $inputs['genarated_email'] = generateSubSaverEmail($email);
+    $inputs['genarated_password'] = generatetoken(6, true);
+    $inputs['website_link'] = $inputs['site_link'] ?? null;
+
+    $genemail = $inputs['genarated_email'];
+
+
+
+    $phone = "0" . substr(preg_replace('/\D/', '', $phone), -9);
+    $amount = mytrim($amount);
+
+    if (empty($desc) || empty($inputs['website_link'])) {
+
+        return sendJsonResponse(422);
+    }
+
+    $apiUrl = 'https://api.boogiecoin.com';
+    $data = [
+        'amount' => $amount,
+        'phone' => $phone,
+        'load_response' => true,
+    ];
+
+    $response =  sendPostRequest($apiUrl, $data, null, $apitoken);
+
+    $rescode = $response['Resultcode'] ?? null;
+    $desc = $response['Desc']  ?? null;
+
+    if ($response['Status'] === true && $rescode === 0) {
+
+        $tratoken = checktoken("rec", generatetoken(4, true), true);
+
+        $insertsrec = inserts(
+            "rec",
+            "rid,amount,platform,plan,price,email,genemail,status,createdat",
+            ['sisssssss', $tratoken, $amount, $product, $category, $amount, $email, $genemail, 1, $today]
+        );
+
+        $emailContent = successEmailTemplate($inputs, $email);
+
+        sendmail($phone, $email, $emailContent, $inputs['genarated_email']);
+
+        // notify(2, "Success", 200, 1);
+        notify(2, "Accepted", 200, 1);
+        sendJsonResponse(200);
+    }
+    notify(1, "stkpush failed: $desc", "stk->$rescode", 1);
+    sendJsonResponse(403);
+}
+
+function successEmailTemplate($data, $uname, $sub = "Subscription Activated Successfully")
+{
+    global $admin;
+
+    $domain = $admin['domain'];
+    $company = $admin['company'];
+
+    // Extract data from the array
+    $amount = $data['amount'];
+    $category = $data['category'];
+    $description = $data['desc'];
+    $email = $data['email'];
+    $phone = $data['phone'];
+    $product = $data['product'];
+    $generatedEmail = $data['genarated_email'];
+    $generatedPassword = $data['genarated_password'];
+    $websiteLink = $data['website_link'];
+    $emailActiveFrom = date('F j, Y \a\t g:i A', strtotime($data['email_activefrom']));
+    $expiry = date('F j, Y', strtotime($data['expiry']));
+    $status = ucfirst($data['status']);
+
+    $msg = "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>$sub - $company</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a0b2e, #16213e, #0f3460);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .email-container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #6b46c1, #3b82f6, #1e40af);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .email-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><circle cx=\"20\" cy=\"20\" r=\"2\" fill=\"rgba(255,255,255,0.1)\"/><circle cx=\"80\" cy=\"40\" r=\"1.5\" fill=\"rgba(255,255,255,0.1)\"/><circle cx=\"40\" cy=\"80\" r=\"1\" fill=\"rgba(255,255,255,0.1)\"/></svg>');
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .company-name {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .email-title {
+            font-size: 20px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-top: 15px;
+        }
+        
+        .email-body {
+            padding: 40px 30px;
+            color: #1f2937;
+            line-height: 1.7;
+        }
+        
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 25px;
+            color: #374151;
+        }
+        
+        .greeting strong {
+            color: #6b46c1;
+            font-weight: 700;
+        }
+        
+        .success-message {
+            background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+            border: 2px solid #22c55e;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .success-message h3 {
+            color: #16a34a;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .success-message p {
+            color: #166534;
+            font-size: 16px;
+        }
+        
+        .important-notice {
+            background: linear-gradient(135deg, #fff7ed, #fed7aa);
+            border: 2px solid #f97316;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .important-notice h3 {
+            color: #ea580c;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .important-notice p {
+            color: #9a3412;
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .credentials-box {
+            background: linear-gradient(135deg, #fef3ff, #f3e8ff);
+            border: 2px solid #8b5cf6;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .credentials-box h4 {
+            color: #6b46c1;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .credential-item {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #8b5cf6;
+        }
+        
+        .credential-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+        
+        .credential-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1f2937;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            background: #f9fafb;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .subscription-details {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-left: 5px solid #0ea5e9;
+            border-radius: 0 12px 12px 0;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .subscription-details h4 {
+            color: #0369a1;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            color: #16a34a;
+            font-size: 18px;
+        }
+        
+        .detail-label {
+            color: #6b7280;
+            font-weight: 600;
+        }
+        
+        .detail-value {
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .amount-highlight {
+            color: #16a34a;
+            font-size: 20px;
+            font-weight: 800;
+        }
+        
+        .activation-timeline {
+            background: linear-gradient(135deg, #fefce8, #fef3c7);
+            border: 2px solid #f59e0b;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .activation-timeline h4 {
+            color: #d97706;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .activation-time {
+            color: #92400e;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #6b46c1, #3b82f6);
+            color: white;
+            text-decoration: none;
+            padding: 15px 35px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(107, 70, 193, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 10px;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(107, 70, 193, 0.6);
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+        }
+        
+        .cta-button.secondary {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+        }
+        
+        .cta-button.secondary:hover {
+            background: linear-gradient(135deg, #ea580c, #dc2626);
+            box-shadow: 0 8px 25px rgba(249, 115, 22, 0.6);
+        }
+        
+        .step-guide {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .step-guide h4 {
+            color: #1e293b;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .step {
+            padding: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .step:last-child {
+            border-bottom: none;
+        }
+        
+        .step-number {
+            background: linear-gradient(135deg, #6b46c1, #3b82f6);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .email-footer {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .footer-company {
+            color: #6b46c1;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .email-header {
+                padding: 30px 20px;
+            }
+            
+            .company-name {
+                font-size: 28px;
+            }
+            
+            .email-body {
+                padding: 30px 20px;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .cta-button {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class='email-container'>
+        <div class='email-header'>
+            <div class='success-icon'>✓</div>
+            <div class='company-name'>$company</div>
+            <div class='email-title'>$sub</div>
+        </div>
+        
+        <div class='email-body'>
+            <div class='greeting'>Hello <strong>$uname</strong>,</div>
+            
+            <div class='success-message'>
+                <h3>🎉 Welcome to $product Premium!</h3>
+                <p>Your $product subscription has been successfully activated. You're now ready to enjoy premium streaming!</p>
+            </div>
+            
+            <p>Congratulations! Your payment has been processed and your <strong>$product</strong> subscription is now active. $description</p>
+            
+            <div class='important-notice'>
+                <h3>📧 IMPORTANT: Setup Your Email Account</h3>
+                <p><strong>Action Required:</strong> You must add the generated email account to your phone/device to receive important subscription updates, renewal notifications, and account alerts.</p>
+                <p><strong>Why this matters:</strong> All future communications about your $product subscription will be sent to this generated email address.</p>
+            </div>
+            
+            <div class='credentials-box'>
+                <h4>🔐 Your $product Account Credentials</h4>
+                <div class='credential-item'>
+                    <div class='credential-label'>Login Email</div>
+                    <div class='credential-value'>$generatedEmail</div>
+                </div>
+                <div class='credential-item'>
+                    <div class='credential-label'>Password</div>
+                    <div class='credential-value'>$generatedPassword</div>
+                </div>
+                <div class='credential-item'>
+                    <div class='credential-label'>Service Website</div>
+                    <div class='credential-value' style='color: #2563eb; text-decoration: underline;'>$websiteLink</div>
+                </div>
+            </div>
+            
+            <div class='activation-timeline'>
+                <h4>⏰ Email Account Activation</h4>
+                <p class='activation-time'>Active From: <strong>$emailActiveFrom</strong></p>
+                <p style='color: #92400e; font-size: 14px; margin-top: 10px;'>
+                    Please ensure you add the generated email to your device before this time to avoid missing important updates.
+                </p>
+            </div>
+            
+            <div class='step-guide'>
+                <h4>📱 How to Add Email to Your Phone</h4>
+                <div class='step'>
+                    <div class='step-number'>1</div>
+                    <div class='step-content'>
+                        <strong>Open Email Settings:</strong> Go to Settings > Mail > Accounts (iPhone) or Settings > Accounts > Add Account (Android)
+                    </div>
+                </div>
+                <div class='step'>
+                    <div class='step-number'>2</div>
+                    <div class='step-content'>
+                        <strong>Add New Account:</strong> Choose 'Other' or 'Manual Setup' and enter the generated email and password above
+                    </div>
+                </div>
+                <div class='step'>
+                    <div class='step-number'>3</div>
+                    <div class='step-content'>
+                        <strong>Enable Notifications:</strong> Make sure email notifications are turned on for this account to receive updates
+                    </div>
+                </div>
+                <div class='step'>
+                    <div class='step-number'>4</div>
+                    <div class='step-content'>
+                        <strong>Test the Setup:</strong> Send a test email to the generated address to ensure it's working properly
+                    </div>
+                </div>
+            </div>
+            
+            <div class='subscription-details'>
+                <h4>📋 Subscription Summary</h4>
+                <div class='detail-row'>
+                    <span class='detail-label'>Service:</span>
+                    <span class='detail-value'>$product</span>
+                </div>
+                <div class='detail-row'>
+                    <span class='detail-label'>Category:</span>
+                    <span class='detail-value'>$category</span>
+                </div>
+                <div class='detail-row'>
+                    <span class='detail-label'>Your Contact Email:</span>
+                    <span class='detail-value'>$email</span>
+                </div>
+                <div class='detail-row'>
+                    <span class='detail-label'>Phone:</span>
+                    <span class='detail-value'>$phone</span>
+                </div>
+                <div class='detail-row'>
+                    <span class='detail-label'>Subscription Expires:</span>
+                    <span class='detail-value'>$expiry</span>
+                </div>
+                <div class='detail-row'>
+                    <span class='detail-label'>Status:</span>
+                    <span class='detail-value'><span class='status-badge status-active'>$status</span></span>
+                </div>
+                <div class='detail-row'>
+                    <span class='detail-label'>Amount Paid:</span>
+                    <span class='detail-value amount-highlight'>KSh $amount</span>
+                </div>
+            </div>
+            
+            <div class='cta-section'>
+                <a href='$websiteLink' class='cta-button' target='_blank'>Start Streaming Now</a>
+           
+            </div>
+            
+            <div class='step-guide'>
+                <h4>❗ Important Reminders</h4>
+                <div class='step'>
+                    <div class='step-number'>!</div>
+                    <div class='step-content'>
+                        <strong>Save Your Credentials:</strong> Keep your login email and password safe. You'll need them to access $product.
+                    </div>
+                </div>
+                <div class='step'>
+                    <div class='step-number'>!</div>
+                    <div class='step-content'>
+                        <strong>Check Email Regularly:</strong> Important renewal and account notifications will be sent to <strong>$generatedEmail</strong>
+                    </div>
+                </div>
+                <div class='step'>
+                    <div class='step-number'>!</div>
+                    <div class='step-content'>
+                        <strong>Contact Support:</strong> If you need help setting up your email or accessing your subscription, we're here 24/7.
+                    </div>
+                </div>
+            </div>
+            
+            <div class='email-footer'>
+                <p>Thank you for choosing <strong>$company</strong> for your subscription needs!</p>
+                <p>Enjoy your $product premium experience.</p>
+                <br>
+                <div class='footer-company'>$company Premium Services</div>
+                <p>Making subscriptions simple and affordable</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>";
+
+    return $msg;
+}
+
+// Example usage:
+/*
+$subscriptionData = [
+    "amount" => 100,
+    "category" => "Entertainment",
+    "desc" => "African premium streaming service",
+    "email" => "yoming@boogiecoin.com",
+    "phone" => "0743981331",
+    "product" => "ShowMax",
+    "processing_till" => "2025-09-19 18:19:13",
+    "expiry" => "2025-012-19 18:19:13",
+    "status" => "active"
+];
+
+$emailContent = successEmailTemplate($subscriptionData, "John Doe");
+*/

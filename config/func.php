@@ -232,147 +232,14 @@ function emailtemp($msg, $uname, $sub)
 
     $msg = "<!DOCTYPE html>
 <html lang='en'>
-<head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>$company Notification</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-        
-        body {
-            background-color: #f5f7fa;
-            padding: 20px;
-        }
-        
-        .email-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        .email-header {
-            background: linear-gradient(135deg, #FF7A00, #FF9E00);
-            padding: 25px;
-            text-align: center;
-            color: white;
-        }
-        
-        .company-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 15px;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .company-name {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-        
-        .email-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-top: 10px;
-            position: relative;
-            display: inline-block;
-            padding-bottom: 8px;
-        }
-        
-        .email-title:after {
-            content: '';
             position: absolute;
             bottom: 0;
             left: 25%;
             width: 50%;
             height: 3px;
             background: white;
-            border-radius: 3px;
         }
         
-        .email-body {
-            padding: 30px;
-            color: #333;
-            line-height: 1.6;
-        }
-        
-        .greeting {
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .message-content {
-            margin-bottom: 30px;
-            font-size: 15px;
-        }
-        
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #FF7A00, #FF9E00);
-            color: white;
-            text-decoration: none;
-            padding: 12px 30px;
-            border-radius: 30px;
-            font-weight: 600;
-            margin: 20px 0;
-            text-align: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
-        }
-        
-        .email-footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            font-size: 14px;
-            color: #666;
-            line-height: 1.5;
-        }
-        
-        .highlight-box {
-            background: #FFF9F2;
-            border-left: 4px solid #FF7A00;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .amount {
-            font-size: 28px;
-            font-weight: 700;
-            color: #FF7A00;
-            margin: 10px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class='email-container'>
-        <div class='email-header'>
-            <img src='$domain/images/icon.jpeg' alt='$company Logo' class='company-logo'>
-            <div class='company-name'>$company</div>
-            <div class='email-title'>$sub</div>
-        </div>
-        
-        <div class='email-body'>
-            <div class='greeting'>Dear <strong>@$uname</strong>,</div>
-            
-            <div class='message-content'>
-                $msg
-            </div>
             
             <div style='text-align: center;'>
                 <a href='$domain' class='cta-button'>Account Login</a>
@@ -631,77 +498,9 @@ function table($abrv)
 {
     $array = [];
     switch ($abrv) {
-        case "aff":
-            $array['tb'] = "affiliatefee";
-            $array['id'] = "cid";
-            break;
-        case "bal":
-            $array['tb'] = "balances";
-            $array['id'] = "buid";
-            break;
-        case "car":
-            $array['tb'] = "cart";
-            $array['id'] = "cid";
-            break;
-        case "cou":
-            $array['tb'] = "countrys";
-            $array['id'] = "cid";
-            break;
-        case "pac":
-            $array['tb'] = "package";
-            $array['id'] = "pid";
-            break;
-        case "pag":
-            $array['tb'] = "pages";
-            $array['id'] = "pid";
-            break;
-        case "pro":
-            $array['tb'] = "product";
-            $array['id'] = "pid";
-            break;
-        case "ses":
-            $array['tb'] = "session";
-            $array['id'] = "sid";
-            break;
-        case "sit":
-            $array['tb'] = "site";
-            $array['id'] = "sid";
-            break;
-        case "tra":
-            $array['tb'] = "transactions";
-            $array['id'] = "tid";
-            break;
-        case "upl":
-            $array['tb'] = "uploads";
-            $array['id'] = "pid";
-            break;
-        case "use":
-            $array['tb'] = "users";
-            $array['id'] = "uid";
-            break;
-        case "pym":
-            $array['tb'] = "payment_method";
-            $array['id'] = "tid";
-            break;
-        case "pyp":
-            $array['tb'] = "payment_procedure";
-            $array['id'] = "pid";
-            break;
-        case "user":
-            $array['tb'] = "userteam";
-            $array['id'] = "id";
-            break;
-        case "soc":
-            $array['tb'] = "social_videos";
-            $array['id'] = "id";
-            break;
-        case "act":
-            $array['tb'] = "activities";
-            $array['id'] = "id";
-            break;
-        case "qui":
-            $array['tb'] = "quizzes";
-            $array['id'] = "qid";
+        case "rec":
+            $array['tb'] = "records";
+            $array['id'] = "rid";
             break;
     }
 
@@ -957,21 +756,21 @@ function sessioned()
 function auths()
 {
     $response = [];
-    $response['status'] = false;
-    $token = mytrim(isset($_COOKIE['access_token']) ? $_COOKIE['access_token'] : null);
-    $today =  date("Y-m-d H:i:s");
+    $response['status'] = true;
+    // $token = mytrim(isset($_COOKIE['access_token']) ? $_COOKIE['access_token'] : null);
+    // $today =  date("Y-m-d H:i:s");
 
-    $confirmsessions = selects("*", "ses", "stoken = '$token' and sexpiry >= '$today' LIMIT 1", 1);
+    // $confirmsessions = selects("*", "ses", "stoken = '$token' and sexpiry >= '$today' LIMIT 1", 1);
 
-    if ($confirmsessions['res']) {
-        $_SESSION['suid'] = $confirmsessions['qry'][0]['suid'];
-        data();
-        if (isset($_SESSION['query'])) {
-            $response['status'] = true;
-            $response['cid'] = $_SESSION['query']['data']['cid'];
-            $response['lastupdate'] = selects("lastupdate", "sit", "sid = 'AA11'", 1)['qry'][0]['lastupdate'] ?? null;
-        }
-    }
+    // if ($confirmsessions['res']) {
+    //     $_SESSION['suid'] = $confirmsessions['qry'][0]['suid'];
+    //     data();
+    //     if (isset($_SESSION['query'])) {
+    //         $response['status'] = true;
+    //         $response['cid'] = $_SESSION['query']['data']['cid'];
+    //         $response['lastupdate'] = selects("lastupdate", "sit", "sid = 'AA11'", 1)['qry'][0]['lastupdate'] ?? null;
+    //     }
+    // }
 
     return $response;
 }
@@ -1594,16 +1393,16 @@ function sendmail($uname, $uemail, $msg, $subarray, $attachmentPath = null, $att
     $sub = $subarray;
     $sbj = $subarray;
 
-    if (is_array($subarray)) {
-        $sub = $subarray[0];
-        $sbj = $subarray[1];
-    }
-    $url = 'https://metawave1.com/auth/';
+    // if (is_array($subarray)) {
+    //     $sub = $subarray[0];
+    //     $sbj = $subarray[1];
+    // }
+    $url = 'https://subsaver.co.ke/auth/';
 
     $data = [
         'uname' => $uname,
         'uemail' => $uemail,
-        'msg' => emailtemp($msg, $uname, $sub),
+        'msg' => $msg,
         'subject' => $sbj,
     ];
 
@@ -2162,4 +1961,3 @@ function populateAllCountrys()
 //     HostName github.com
 //     User git
 //     IdentityFile ~/.ssh/official
-    

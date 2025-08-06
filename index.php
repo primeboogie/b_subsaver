@@ -55,6 +55,6 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 unauthorized($action);
 
-sendJsonResponse(401,false,null,$_COOKIE);
+sendJsonResponse(401,false,null,null);
 
 
