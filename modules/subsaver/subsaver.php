@@ -2047,8 +2047,8 @@ function purchase()
 
         $insertsrec = inserts(
             "rec",
-            "rid,amount,platform,plan,price,email,genemail,status,createdat",
-            ['sisssssss', $tratoken, $amount, $product, $category, $amount, $email, $genemail, 1, $today]
+            "rid,amount,platform,plan,price,email,phone,genemail,status,createdat",
+            ['sissssssss', $tratoken, $amount, $product, $category, $amount, $email,$phone, $genemail, 1, $today]
         );
 
         $emailContent = successEmailTemplate($inputs, $email);
@@ -2168,7 +2168,7 @@ function successEmailTemplate($data, $uname, $sub = "Subscription Activated Succ
             border-radius: 25px;
             display: inline-block;
             margin-top: 15px;
-        }
+        }sysamount
         
         .email-body {
             padding: 40px 30px;
